@@ -1,7 +1,5 @@
-
-# xuchujun2672@gmail.com <-- LA Jerry's email
-
 from intbase import InterpreterBase
+from intbase import ErrorType
 from element import Element
 from brewparse import parse_program
 
@@ -30,10 +28,14 @@ class Interpreter(InterpreterBase):
         #print ("run_func starting")
         for nodes in func_node: 
             if nodes.get('name') == 'main':
-                print ("in main")
+                #print ("in main")
                 for statements in nodes.get('statements'): #changed from just 'func_node' ??
-                    print(statements.get('name')) # print check
+                    #print(statements.get('name')) # print check
                     self.run_statement(statements)
+            else:
+                super().error(ErrorType.NAME_ERROR,"No main() function was found",)
+
+
                           
 
 # 	func run_statement(statement_node):
@@ -44,11 +46,13 @@ class Interpreter(InterpreterBase):
 # 		...
     def run_statement(self, statement_node):
         if statement_node.elem_type == '=':
-            print ("This is an assignment")
+            #print ("This is an assignment")
             self.do_assignment(statement_node)
         elif statement_node.elem_type == 'fcall':
-            print ("This is a function call")
-            #self.do_func_call(statement_node)
+            #print ("This is a function call")
+            self.do_func_call(statement_node)
+        else:
+            super().error(ErrorType.NAME_ERROR,"Unknown Statement",)
 
 
 	# func do_assignment(statement_node):
@@ -65,8 +69,13 @@ class Interpreter(InterpreterBase):
         
     
 
-    # def do_func_call(self, statement_node):
-    #     var_name = statement_node.get()
+    def do_func_call(self, statement_node):
+        var_name = statement_node.get('name') #this should be "print"
+        if (var_name != "print"):
+            super().error(ErrorType.NAME_ERROR,"Unknown function call",)
+        arg_list = statement_node.get('args')
+        self.evaluate_expression(statement_node)
+
 
 
 #       func evaluate_expression(expression_node):
@@ -81,30 +90,67 @@ class Interpreter(InterpreterBase):
 
     def evaluate_expression(self, source_node): # source_node maps to either exp node, var node, or val node
         source_type = source_node.elem_type
-        if source_type == 'int': # self or source_node ??
+        if source_type == 'int': 
             # update map for type 
             return ("int", source_node.get('val'))
+        if source_type == 'string': 
+            # update map for type 
+            return ("str", source_node.get('val'))
         elif source_type == 'var': # We are accessing a variable node here
             #return source_node.get('name')
             return self.var_map[source_node.get('name')]
         #if an exp node, can have binary operators or function call
         elif source_type == '+':
-            op1 = source_node.get('op1')
+            # op1 = source_node.get('op1')
             #print ("op1 is a " + str(op1))
             #print (str(op1.get('val')))
-            op2 = source_node.get('op2')
+            # op2 = source_node.get('op2')
             #print ("op2 is a " + str(op2))
             #print (str(op2.get('val')))
-        
-            ans = self.evaluate_expression(op1)[1] + self.evaluate_expression(op2)[1] # Needs to be recursive but is this correct ??
-            print (ans)
-            return ans
+            op1 = self.evaluate_expression(source_node.get('op1'))
+            op2 = self.evaluate_expression(source_node.get('op2'))
+            print (op1)
+            print (op2)
+            if (op1[0] == op2[0]): # check the type of operands
+                 ans = op1[1] + op2[1] #add the values
+                 #print (ans)
+                 return ("int", ans)
+            else:
+                super().error(ErrorType.TYPE_ERROR,"Incompatible types for arithmetic operation",)
+           
         elif source_type == '-':
-            op1 = source_node.get('op1')
-            op2 = source_node.get('op2')
-            ans =  self.evaluate_expression(op1)[1] - self.evaluate_expression(op2)[1]
-            print (ans)
-            return ans
+            op1 = self.evaluate_expression(source_node.get('op1'))
+            op2 = self.evaluate_expression(source_node.get('op2'))
+            # print (str(op1.get('val')))
+            # print (str(op2.get('val')))
+            if (op1[0] == op2[0]): # check the type of operands
+                 ans = op1[1] - op2[1] #add the values
+                 #print (ans)
+                 return ("int", ans)
+            else:
+                super().error(ErrorType.TYPE_ERROR,"Incompatible types for arithmetic operation",)
+
+        elif source_type == 'fcall':
+            if (source_node.get('name') == 'print'):
+                arg_list = source_node.get('args')
+                concat = ""
+                for x in arg_list: # evaluate the list of nodes, cast to a string, and then concatenate them
+                    args = self.evaluate_expression(x)
+                    #print(str(args[1]))
+                    concat = concat + str(args[1])
+
+                super().output(concat) #concat the list of args
+
+            elif (source_node.get('name') == 'inputi'):
+                input_list = source_node.get('args')
+                for x in input_list:
+                    input = self.evaluate_expression(x) 
+                    self.var_map[x.get('name')] = input
+        else:
+            super().error(ErrorType.NAME_ERROR,"Unknown Expression",)
+
+
+
 
 
 
@@ -130,13 +176,16 @@ def main():
     program1 = """
     func main() {
         x = 5 + 6;
+        y = 2 - 1;
         print("The sum is: ", x);
+        print("The difference is: ", y);
+        z = -2 + 4;
+        print("The second sum is: ", z);
         }
     """
     interpreter.run(program1)
 
-    interpreter = Interpreter()
-    interpreter.run(program1)   
+  
     
 if __name__ == "__main__":
     main()	
