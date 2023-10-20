@@ -143,9 +143,21 @@ class Interpreter(InterpreterBase):
 
             elif (source_node.get('name') == 'inputi'):
                 input_list = source_node.get('args')
-                for x in input_list:
-                    input = self.evaluate_expression(x) 
-                    self.var_map[x.get('name')] = input
+                if (len(input_list) > 1):
+                    super().error(ErrorType.TYPE_ERROR,"Invalid number of arguments",)
+                for x in input_list: #for future if we accept more arguments
+                    # print(x)
+                    # print( "Name is " + x.get('name'))
+                    # print("Exp is " + x.get('expression'))
+                    super().output(x.get('val'))
+                    input = int(super().get_input())
+                    return ("int", input)
+                    #eval_input = self.evaluate_expression(input) 
+                
+            else:
+                super().error(ErrorType.NAME_ERROR,"Invalid function call",)
+                    
+                    
         else:
             super().error(ErrorType.NAME_ERROR,"Unknown Expression",)
 
@@ -179,8 +191,8 @@ def main():
         y = 2 - 1;
         print("The sum is: ", x);
         print("The difference is: ", y);
-        z = -2 + 4;
-        print("The second sum is: ", z);
+        foo = inputi("Enter a number: ");
+        print(foo);
         }
     """
     interpreter.run(program1)
