@@ -63,7 +63,10 @@ class Interpreter(InterpreterBase):
 
     def do_assignment(self, statement_node):
         var_name = statement_node.get('name') 
-        source_node = statement_node.get('expression') 
+        source_node = statement_node.get('expression')
+        # if (source_node.elem_type != 'var'):
+        #     print(source_node.elem_type)
+        #     super().error(ErrorType.NAME_ERROR,"Can only assign values to a variable",)
         result_val = self.evaluate_expression(source_node) #add param for var_name?
         self.var_map[var_name] = result_val #should I be updating self.var_map?
         
@@ -98,7 +101,10 @@ class Interpreter(InterpreterBase):
             return ("str", source_node.get('val'))
         elif source_type == 'var': # We are accessing a variable node here
             #return source_node.get('name')
-            return self.var_map[source_node.get('name')]
+            if source_node.get('name') in self.var_map:
+                return self.var_map[source_node.get('name')]
+            else:
+                super().error(ErrorType.NAME_ERROR,"Variable not defined",)
         #if an exp node, can have binary operators or function call
         elif source_type == '+':
             # op1 = source_node.get('op1')
@@ -109,8 +115,8 @@ class Interpreter(InterpreterBase):
             #print (str(op2.get('val')))
             op1 = self.evaluate_expression(source_node.get('op1'))
             op2 = self.evaluate_expression(source_node.get('op2'))
-            print (op1)
-            print (op2)
+            #print (op1)
+            #print (op2)
             if (op1[0] == op2[0]): # check the type of operands
                  ans = op1[1] + op2[1] #add the values
                  #print (ans)
@@ -144,13 +150,29 @@ class Interpreter(InterpreterBase):
             elif (source_node.get('name') == 'inputi'):
                 input_list = source_node.get('args')
                 if (len(input_list) > 1):
-                    super().error(ErrorType.TYPE_ERROR,"Invalid number of arguments",)
+                    super().error(ErrorType.NAME_ERROR,"Invalid number of arguments",)
+                if len(input_list) == 0:
+                    empt_arg_input = int(super().get_input())
+                    # TEST FOR MULT ARGS
+                    # for x in empt_arg_input:
+                    #     if x == ' ':
+                    #         super().error(ErrorType.FAULT_ERROR,"Invalid input",)
+                    # empt_int_input = int(input)
+                    return ("int", empt_arg_input)
                 for x in input_list: #for future if we accept more arguments
                     # print(x)
                     # print( "Name is " + x.get('name'))
                     # print("Exp is " + x.get('expression'))
                     super().output(x.get('val'))
+                    #print("input value is: " + str(super().get_input()))
+                    # if (super().get_input() == None):
+                    #     super().error(ErrorType.FAULT_ERROR,"Invalid input",)
+                    #print (super().get_input())
                     input = int(super().get_input())
+                    # for x in input:
+                    #     if x == '':
+                    #         super().error(ErrorType.FAULT_ERROR,"Invalid input",)
+                    # int_input = int(input)
                     return ("int", input)
                     #eval_input = self.evaluate_expression(input) 
                 
@@ -183,21 +205,54 @@ class Interpreter(InterpreterBase):
 
 			     
 
+# def main():
+#     interpreter = Interpreter()
+#     program1 = """
+#     func main() {
+#         x = 5 + 6;
+#         y = 1 - 5;
+#         print("The sum is: ", x);
+#         print("The difference is: ", y);
+#         foo = inputi("Enter a number: ");
+#         print(foo);
+#         a = 10;
+#         b = 20;
+#         print("a + b is: " , (a+b));
+#         c = 4 - (5 + 1);
+#         print ("c is: ", c);
+
+#         e = ((5 + (6 - 3)) - ((2 - 3) - (1 - 7)));
+#         print(e);
+
+#         i = 10;
+#         b = 5 + i;
+#         print("b = ", b);
+
+#         d = inputi();
+#         print(d);
+
+#         }
+#     """
+#     interpreter.run(program1)
+
 def main():
     interpreter = Interpreter()
     program1 = """
     func main() {
-        x = 5 + 6;
-        y = 2 - 1;
-        print("The sum is: ", x);
-        print("The difference is: ", y);
-        foo = inputi("Enter a number: ");
-        print(foo);
+       
+        d = inputi("Enter a number: ");
+        h = d + 50;
+        print(h);
+
+        y = x + 5;
+
+        print(y);
+
+        
+
         }
     """
     interpreter.run(program1)
-
-  
     
 if __name__ == "__main__":
     main()	
